@@ -1,5 +1,10 @@
 ﻿// @link http://en.wikipedia.org/wiki/Exponential_moving_average#Exponential_moving_average
 
+function add( array , size ,element ){
+  array.push(element)
+  return array.slice(array.length-size, array.length)
+}
+
 var Indicator = function(weight) {
   this.input = 'price';
   this.weight = weight;
@@ -11,7 +16,8 @@ var Indicator = function(weight) {
 Indicator.prototype.update = function(price) {
   // The first time we can't calculate based on previous
   // ema, because we haven't calculated any yet.
-  this.prices[this.age] = price;
+
+  this.prices = add(this.prices,this.weight,price)
   if(this.result === false)
     this.result = price;
 
