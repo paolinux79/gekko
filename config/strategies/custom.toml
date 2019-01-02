@@ -1,1 +1,3 @@
-my_custom_setting = 10
+windowLengthShort = 10
+windowLengthLong = 100
+threshold = 0.01

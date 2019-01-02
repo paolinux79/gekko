@@ -9,55 +9,122 @@
 // long or short).
 
 var log = require('../core/log');
-
+var _ = require('lodash');
 // Let's create our own strat
 var strat = {};
 
+function isCrossing(shortA, longA, shortB, longB){
+
+  if ((shortA > longA) && (shortB < longA) || (shortA < longA) && (shortB > longA))
+  {
+    return true;
+  }
+  return false;
+}
 // Prepare everything our method needs
 strat.init = function() {
-  this.input = 'candle';
-  this.currentTrend = 'long';
-  this.requiredHistory = 0;
+
+  this.name = 'CUSTOM';
+
+  this.currentTrend;
+  this.lastShort;
+  this.lastLong;
+  this.requiredHistory = this.tradingAdvisor.historySize;
+
+  // define the indicators we need
+  this.addIndicator('maShort', 'EMA', this.settings.windowLengthShort);
+  this.addIndicator('maLong', 'EMA', this.settings.windowLengthLong);
+
+
 }
 
 // What happens on every new candle?
 strat.update = function(candle) {
-
-  // Get a random number between 0 and 1.
-  this.randomNumber = Math.random();
-
-  // There is a 10% chance it is smaller than 0.1
-  this.toUpdate = this.randomNumber < 0.1;
 }
 
 // For debugging purposes.
 strat.log = function() {
-  log.debug('calculated random number:');
-  log.debug('\t', this.randomNumber.toFixed(3));
+
 }
 
 // Based on the newly calculated
 // information, check if we should
 // update or not.
-strat.check = function() {
+strat.check = function(candle) {
 
-  // Only continue if we have a new update.
-  if(!this.toUpdate)
-    return;
 
-  if(this.currentTrend === 'long') {
 
-    // If it was long, set it to short
-    this.currentTrend = 'short';
+  let maShort = this.indicators.maShort;
+  let maLong = this.indicators.maLong;
+  let currentShort = maShort.result;
+  let currentLong = maLong.result;
+  let price = candle.close;
+  let diff = currentShort - currentLong;
+  // let message = '@ ' + price.toFixed(8) + ' (' + currentShort.toFixed(5) + '/' + diff.toFixed(5) + ')';
+  log.debug(currentShort + " " + currentLong + " " + diff)
+  log.debug(maShort)
+
+//   if ((Math.abs(diff) < this.settings.threshold ) && ((this.lastShort > currentShort) ))
+//   {
+//     this.lastShort = currentShort;
+//     this.lastLong = currentLong;
+//     this.advice('long');
+//   } else if ((Math.abs(diff) < this.settings.threshold )  && ((this.lastShort < currentShort) )){
+//
+//
+//     this.lastShort = currentShort;
+//     this.lastLong = currentLong;
+//     this.advice('short');
+//   } else
+//   {
+//   this.lastShort = currentShort;
+//   this.lastLong = currentLong;
+//   this.advice();
+// }
+//
+
+  if ( (isCrossing(this.lastShort, this.lastLong, currentShort, currentLong) ) && ((this.lastShort > currentShort) && (this.lastLong > currentLong)))
+  {
+    this.lastShort = currentShort;
+    this.lastLong = currentLong;
     this.advice('short');
-
-  } else {
-
-    // If it was short, set it to long
-    this.currentTrend = 'long';
+  } else if ((isCrossing(this.lastShort, this.lastLong, currentShort, currentLong) )  && ((this.lastShort < currentShort) && (this.lastLong < currentLong))){
+    this.lastShort = currentShort;
+    this.lastLong = currentLong;
     this.advice('long');
+  } else
+  {
+  this.lastShort = currentShort;
+  this.lastLong = currentLong;
+  this.advice();
+}
 
-  }
+
+  // log.debug(smaLong.prices[smaLong.prices.length-1]);
+  let message = '@ ' + price.toFixed(8) + ' (' + currentShort.toFixed(5) + '/' + diff.toFixed(5) + ')';
+
+  // if(diff > this.settings.thresholds.up) {
+  //   log.debug('we are currently in uptrend', message);
+  //
+  //   if(this.currentTrend !== 'up') {
+  //     this.currentTrend = 'up';
+  //     this.advice('long');
+  //   } else
+  //     this.advice();
+  //
+  // } else if(diff < this.settings.thresholds.down) {
+  //   log.debug('we are currently in a downtrend', message);
+  //
+  //   if(this.currentTrend !== 'down') {
+  //     this.currentTrend = 'down';
+  //     this.advice('short');
+  //   } else
+  //     this.advice();
+  //
+  // } else {
+  //   log.debug('we are currently not in an up or down trend', message);
+  //   this.advice();
+  // }
 }
 
 module.exports = strat;

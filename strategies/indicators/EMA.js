@@ -5,11 +5,13 @@ var Indicator = function(weight) {
   this.weight = weight;
   this.result = false;
   this.age = 0;
+  this.prices = [];
 }
 
 Indicator.prototype.update = function(price) {
   // The first time we can't calculate based on previous
   // ema, because we haven't calculated any yet.
+  this.prices[this.age] = price;
   if(this.result === false)
     this.result = price;
 
@@ -28,7 +30,7 @@ Indicator.prototype.calculate = function(price) {
 
   // yesterday
   var y = this.result;
-  
+
   // calculation
   this.result = price * k + y * (1 - k);
 }
