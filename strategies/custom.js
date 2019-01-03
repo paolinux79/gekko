@@ -22,9 +22,8 @@ var strat = {};
 function isIncreasing(array,size) {
   xs = array.slice(array.length-size, array.length)
   for (var i = 0; i < xs.length - 1; i++) {
-      if (xs[i]> xs[i+1]) {
+      if (xs[i] > xs[i+1]) {
           return false;
-          break;
       }
   }
   return true;
@@ -35,19 +34,20 @@ function isDecreasing(array,size) {
   for (var i = 0; i < xs.length - 1; i++) {
       if (xs[i] < xs[i+1]) {
           return false;
-          break;
       }
   }
   return true;
 }
 
 function isCrossing(shortA, longA, shortB, longB){
-
-  if ((shortA > longA) && (shortB < longA) || (shortA < longA) && (shortB > longA))
+     if ( (shortB == longB) || (shortA >= longA && shortB <= longB) || (shortA <= longA && shortB >= longB) )
   {
     return true;
   }
+  else
+  {
   return false;
+  }
 }
 // Prepare everything our method needs
 strat.init = function() {
@@ -86,78 +86,25 @@ strat.check = function(candle) {
   let maLong = this.indicators.maLong;
   let currentShort = maShort.result;
   let currentLong = maLong.result;
-  let price = candle.close;
-  let diff = currentShort - currentLong;
-  // let message = '@ ' + price.toFixed(8) + ' (' + currentShort.toFixed(5) + '/' + diff.toFixed(5) + ')';
-  // log.debug(price + " " + currentShort + " " + currentLong + " " + diff)
-  log.debug("-------------------")
-  log.debug(isCrossing(this.lastShort, this.lastLong, currentShort, currentLong))
-  log.debug(this.indicators.maShort.prices)
-  log.debug(isDecreasing(this.indicators.maShort.prices,10) + " " + isIncreasing(this.indicators.maLong.prices,10))
-  // log.debug(isIncreasing(this.indicators.maLong.prices))
-  // log.debug(isDecreasing(this.indicators.maShort.prices))
-  // log.debug(isDecreasing(this.indicators.maLong.prices))
-//   if ((Math.abs(diff) < this.settings.threshold ) && ((this.lastShort > currentShort) ))
-//   {
-//     this.lastShort = currentShort;
-//     this.lastLong = currentLong;
-//     this.advice('long');
-//   } else if ((Math.abs(diff) < this.settings.threshold )  && ((this.lastShort < currentShort) )){
-//
-//
-//     this.lastShort = currentShort;
-//     this.lastLong = currentLong;
-//     this.advice('short');
-//   } else
-//   {
-//   this.lastShort = currentShort;
-//   this.lastLong = currentLong;
-//   this.advice();
-// }
-//
-
-  if ( (isCrossing(this.lastShort, this.lastLong, currentShort, currentLong) ) && (isDecreasing(this.indicators.maShort.prices,windowMonotonicityLength) && isDecreasing(this.indicators.maLong.prices,windowMonotonicityLength)))
-  {
-    this.lastShort = currentShort;
-    this.lastLong = currentLong;
-    this.advice('short');
-  } else if ((isCrossing(this.lastShort, this.lastLong, currentShort, currentLong) )  && (isIncreasing(this.indicators.maShort.prices,windowMonotonicityLength) && isIncreasing(this.indicators.maLong.prices,windowMonotonicityLength))){
-    this.lastShort = currentShort;
-    this.lastLong = currentLong;
-    this.advice('long');
-  } else
-  {
-  this.lastShort = currentShort;
-  this.lastLong = currentLong;
-  this.advice();
-}
+  // let price = candle.close;
 
 
-  // log.debug(smaLong.prices[smaLong.prices.length-1]);
-  // let message = '@ ' + price.toFixed(8) + ' (' + currentShort.toFixed(5) + '/' + diff.toFixed(5) + ')';
+let crossed = isCrossing(this.lastShort, this.lastLong, currentShort, currentLong);
+this.lastShort = currentShort;
+this.lastLong = currentLong;
 
-  // if(diff > this.settings.thresholds.up) {
-  //   log.debug('we are currently in uptrend', message);
-  //
-  //   if(this.currentTrend !== 'up') {
-  //     this.currentTrend = 'up';
-  //     this.advice('long');
-  //   } else
-  //     this.advice();
-  //
-  // } else if(diff < this.settings.thresholds.down) {
-  //   log.debug('we are currently in a downtrend', message);
-  //
-  //   if(this.currentTrend !== 'down') {
-  //     this.currentTrend = 'down';
-  //     this.advice('short');
-  //   } else
-  //     this.advice();
-  //
-  // } else {
-  //   log.debug('we are currently not in an up or down trend', message);
-  //   this.advice();
-  // }
+  if (crossed) {
+    if (isDecreasing(this.indicators.maShort.prices, windowMonotonicityLength) && isDecreasing(this.indicators.maLong.prices, windowMonotonicityLength)) {
+      this.advice('short');
+    } else if (isIncreasing(this.indicators.maShort.prices, windowMonotonicityLength) && isIncreasing(this.indicators.maLong.prices, windowMonotonicityLength)) {
+      this.advice('long');
+    }
+  }
+  else {
+    this.advice();
+  }
+
+
 }
 
 module.exports = strat;
