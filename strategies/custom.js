@@ -14,39 +14,56 @@ var _ = require('lodash');
 var strat = {};
 
 
-// function slicer(xs , size)
-// {
-//   return xs.slice(xs.length-size, xs.length)
-// }
-
 function isIncreasing(array,size) {
-  xs = array.slice(array.length-size, array.length)
-  for (var i = 0; i < xs.length - 1; i++) {
-      if (xs[i] > xs[i+1]) {
-          return false;
-      }
+  if (size < 2) {
+    return true;
   }
-  return true;
+  else
+  {
+    xs = array.slice(array.length-size, array.length)
+    for (var i = 0; i < xs.length - 1; i++) {
+      if (xs[i] > xs[i+1]) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 function isDecreasing(array,size) {
-  xs = array.slice(array.length-size, array.length)
-  for (var i = 0; i < xs.length - 1; i++) {
-      if (xs[i] < xs[i+1]) {
-          return false;
-      }
+  if (size < 2) {
+    return true;
   }
-  return true;
+  else
+  {
+    xs = array.slice(array.length-size, array.length)
+    for (var i = 0; i < xs.length - 1; i++) {
+      if (xs[i] < xs[i+1]) {
+        return false;
+      }
+    }
+    return true;
+  }
+}
+
+
+function isEnough(lastPrice, currentPrice,threshold){
+
+  let delta = Math.abs(lastPrice - currentPrice);
+  let ratio = delta/currentPrice
+  let out = (ratio > threshold);
+  log.debug(currentPrice, lastPrice, delta, threshold, ratio ,out);
+  return out;
 }
 
 function isCrossing(shortA, longA, shortB, longB){
-     if ( (shortB == longB) || (shortA >= longA && shortB <= longB) || (shortA <= longA && shortB >= longB) )
+  if ( (shortB == longB) || (shortA >= longA && shortB <= longB) || (shortA <= longA && shortB >= longB) )
   {
     return true;
   }
   else
   {
-  return false;
+    return false;
   }
 }
 // Prepare everything our method needs
@@ -54,7 +71,7 @@ strat.init = function() {
 
   this.name = 'CUSTOM';
 
-  this.currentTrend;
+  this.lastBetPrice = 0;
   this.lastShort;
   this.lastLong;
   this.requiredHistory = this.tradingAdvisor.historySize;
@@ -86,25 +103,50 @@ strat.check = function(candle) {
   let maLong = this.indicators.maLong;
   let currentShort = maShort.result;
   let currentLong = maLong.result;
-  // let price = candle.close;
+  let price = candle.close;
 
 
-let crossed = isCrossing(this.lastShort, this.lastLong, currentShort, currentLong);
-this.lastShort = currentShort;
-this.lastLong = currentLong;
+  let crossed = isCrossing(this.lastShort, this.lastLong, currentShort, currentLong);
+  this.lastShort = currentShort;
+  this.lastLong = currentLong;
 
   if (crossed) {
-    if (isDecreasing(this.indicators.maShort.prices, windowMonotonicityLength) && isDecreasing(this.indicators.maLong.prices, windowMonotonicityLength)) {
-      this.advice('short');
-    } else if (isIncreasing(this.indicators.maShort.prices, windowMonotonicityLength) && isIncreasing(this.indicators.maLong.prices, windowMonotonicityLength)) {
-      this.advice('long');
+    if (isIncreasing(this.indicators.maShort.prices, windowMonotonicityLength)) {
+      if (isEnough(this.lastBetPrice,price,this.settings.betThreshold)) {
+        this.lastBetPrice = price;
+        this.advice('long');
+      }
+      else
+      {
+        this.advice();
+      }
+    } else{
+      if (isEnough(this.lastBetPrice,price,this.settings.betThreshold)) {
+        this.lastBetPrice = price;
+        this.advice('short');}
+        else
+        {
+          this.advice();
+        }
+      }
     }
+    else {
+      this.advice();
+    }
+
+
+    // if(crossed){
+    // if (this.lastBet == 'short'){
+    //   this.lastBet = 'long'
+    //   this.advice(this.lastBet);
+    // } else if (this.lastBet == 'long'){
+    //   this.lastBet = 'short'
+    //   this.advice(this.lastBet);
+    // } else{
+    //       this.advice();
+    // }
+    // }
+
   }
-  else {
-    this.advice();
-  }
 
-
-}
-
-module.exports = strat;
+  module.exports = strat;

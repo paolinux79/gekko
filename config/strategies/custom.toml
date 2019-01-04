@@ -1,3 +1,4 @@
 windowLengthShort = 10
 windowLengthLong = 100
-sortedWindow = 10
+sortedWindow = 5
+betThreshold = 0.003
